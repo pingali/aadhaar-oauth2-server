@@ -1,5 +1,5 @@
-Oauth2 python server and client Aadhaar Authentication Service 
----------------------------------------------------------------
+Aadhaar-enabled Oauth2 Python server and client 
+------------------------------------------------
 
 Note: This is still work in progress. Contact the developer before
 using it. 
@@ -10,10 +10,12 @@ citizen health records in the government database) with third parties
 combining oauth2, a data sharing protocol, with Aadhaar
 authentication. 
 
-Oauth2 is a IETF-approved data-sharing protocol. It is used by
-established player such as Google and Twitter. Oauth2 is a more recent
+[Oauth](http://oauth.net) is an IETF-approved data-sharing
+protocol. It is used by established player such as Google and Twitter
+to enable easy development of third party applications with requiring
+username and password. [Oauth2](http://oauth.net/2) is a more recent
 and simpler version of the protocol that is in the middle of the
-standardization process. 
+standardization process.
 
 Aadhaar is a national ID project in India. It supports realtime
 authentication using demographic and biometric attributes of
@@ -22,45 +24,52 @@ individuals. Please see [Aadhaar authentication API Ver 1.5 (Rev 1)][spec].
 [spec]: http://uidai.gov.in/images/FrontPageUpdates/aadhaar_authentication_api_1_5_rev1_1.pdf
 
 
-Intended audience
+Intended Audience
 -----------------
 
-Developers of Aadhaar-based application developers. Effort has been
-made to keep the code readable but they should be able to read the
-code and experiment to get going. 
+Developers of Aadhaar-enabled applications. Effort has been made to
+keep the code readable but they should be able to read the code and
+experiment to get going.
 
-Codebase
+Codebase 
 --------
 
 This codebase is derived from examples directory of an implementation
-of Oauth2 protocol called [oauth2app][oauth2app] and Django. The code
-has been expanded in a few ways:
+of Oauth2 protocol called [oauth2app][oauth2app],
+[Gariel Grant's fork][oauth2app-gabriel] and Django. The code has been
+extended in a few ways:
 
-   1. Separated the oauth2 client and server implementations - which were combined into one 
-   2. Integrated aadhaar authentication through [django-auth-aadhaar][django-auth-aadhaar]
-   3. Moved the logic from the front end javascript to the server 
+* Separated the oauth2 client and server implementations - which were combined into one 
+* Integrated aadhaar authentication through [django-auth-aadhaar][django-auth-aadhaar]
+* Moved the logic from the front end javascript to the server 
 
 [oauth2app]: https://github.com/hiidef/oauth2app 
+[oauth2app-grabriel]: https://github.com/gabrielgrant/oauth2app 
 [django-auth-aadhaar]: https://github.com/pingali/django-auth-aadhaar
 
 The codebase is a bit clunky and needs work to make it robust. But it
-is a reasonable starting point. 
+is a reasonable starting point. There are three directories: 
+
+* myresource: Django application that is the resource server 
+* myclient: Django application that is the client 
+* shared: Libraries and functions that are shared by both the above applications
+
 
 Latest Release
 --------------
 
   * Alpha Release (0.1) Nov 30, 2011 - Planned 
-  * Supported platform: Linux (Ubuntu) 
+  * Platform: Linux (Ubuntu 11.04) 
 
 Oauth2 Flow 
 ------------
 
 >      Example principals: 
 > 
->               Role            Example
->          Resource server      Government of India 
->          Resource client      Apollo hospital 
->          Resource owner       Resident of India
+>           Role               Example
+>      Resource server      Government of India 
+>      Resource client      Apollo hospital 
+>      Resource owner       Resident of India
 > 
 >      Setup client: 
 >      1. client   -----------> server [create account]
@@ -148,6 +157,49 @@ is based on [django-auth-aadhaar][django-auth-aadhaar] and
 *The name doesnt matter and it mostly there for legacy reasons. We
 might call it an user account or whatever.
 
+Configuration
+-------------
+
+The resource server configuration is specified in myresource/settings.py. 
+
+       MYSITE="Resource Site"
+       MYSITE_ROLE="server" 
+       RESOURCE_SERVER="http://localhost:8000"
+       AUTHORIZE_URL=RESOURCE_SERVER + "/oauth2/authorize"
+       ACCESS_TOKEN_URL=RESOURCE_SERVER + "/oauth2/token"
+
+       # Aadhaar-specific configuration
+       AADHAAR_AUTHORIZE_URL=RESOURCE_SERVER + "/oauth2/authorize/aadhaar"
+       AUTH_PROFILE_MODULE='django_auth_aadhaar.AadhaarUserProfile' 
+       AADHAAR_CONFIG_FILE='fixtures/auth.cfg'
+       AUTHENTICATION_BACKENDS = (     
+           'django_auth_aadhaar.backend.AadhaarBackend',
+           ....
+  	   )
+
+
+Myclient settings.py has settings that identify the role of this server
+and location where the server configuration is stored. 
+
+        MYSITE="Client Site"
+        MYSITE_ROLE="client"
+        CLIENT_SITE="http://localhost:8001"
+        CLIENT_CONFIG='client-config.json'
+
+The client configuration file is obtained from the server and has a
+structure like this:
+
+     { 
+		 "resource_name": "Resource Site", 
+		 "resource_server": "http://localhost:8000", 
+		 "client_secret": "57edb78728e1e61c25cca5e104f9c5", 
+		 "client_key": "d53d90894c157ab94d693a24d7a0cc"
+		 "authorize_url": "http://localhost:8000/oauth2/authorize", 
+		 "aadhaar_authorize_url": "http://localhost:8000/oauth2/authorize/aadhaar", 
+		 "access_token_url": "http://localhost:8000/oauth2/token", 
+	 }
+
+
 Debugging
 ---------
 
@@ -167,15 +219,16 @@ Many. TBD.
 Work-in-progress    
 ----------------
 
-  Immediate: 
+Immediate: 
 
-    1. Clean up the implementation
-    2. Test with https connection (whenever it is available) 
-    3. Performance evaluation/statistics    
+1. Clean up the implementation
+2. Test with https connection (whenever it is available) 
+3. Performance evaluation/statistics    
 
-  Medium term:  
+Medium term:  
 
-    1. Expand the authentication support 
+1. Expand the authentication support in conjunction with pyAadhaarAuth
+2. Experiment with python-oauth2 
 
 Thanks 
 ------   
