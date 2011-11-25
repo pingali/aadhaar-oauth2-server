@@ -1,6 +1,5 @@
 #-*- coding: utf-8 -*-
 
-
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
@@ -16,9 +15,18 @@ import requests
 import traceback 
 from urllib import urlencode 
 
+"""
+Interact with the client. 
+"""
 @login_required 
 def client(request, client_id):
-    
+    """
+    Show the client details, available codes and access tokens for a
+    given client.     
+    """
+    # XXX The client should eventually be decoupled from the user
+    # account information.
+
     print "In apps.client.views.client - entered" 
     client = Client.objects.get(key=client_id)
     template = {
@@ -32,22 +40,35 @@ def client(request, client_id):
         template, 
         RequestContext(request))
 
-# this receives the post from the oauth2 server 
+# Login not required. 
 def request(request, req_id):
+    """
+    Receive an authorization code from the server. The request object
+    is used to generate the URL.
+    """
     
+    # client => server : create account
+    # server => client: client configuration 
+    # client => server: authorize request 
+    # server => client: respond with authorization code 
+
+    # XXX Rationalize the URL. Right now it is client/request/aaa
+    # it could easily be request/aaa or callback/aaa 
     print "In apps.client.views.request - entered" 
+
+    # The oauthRequest object is the state object for the request. It
+    # keeps track of what the user asked and is updated when new
+    # information is received from the server. Lookup that object
+    # first.
     req = OauthRequest.objects.get(key=req_id)
     print "Found request = ", vars(req)
     try: 
-        # XXX This URL should embed localstate information
-        # to be able to extract all relevant information. 
-        # The form should first post to the local server 
-        # which stores the request and redirects it to the 
-        # remote server. 
+        
+        # Find the code 
         code_key = request.GET.get('code')
         print "Received code = ", code_key
         
-        #=> Check if it exists 
+        #=> Check if the code exists.
         try: 
             code = Code.objects.get(key=code_key)
         except:
@@ -59,17 +80,22 @@ def request(request, req_id):
             # looks like (based on the redirect_uri specified") 
             raise Exception("Duplicate code returned") 
         
-        # expire is set automatically 
+        # XXX expire is set automatically. But eventually it must be
+        # transmitted from the server. For some reason the server is
+        # not sending the expiration information. 
         code = Code.objects.create(user=req.user, 
                                    client=req.client,
                                    redirect_uri=request.path, 
                                    key=code_key)
-        print "code's scope = ", code.scope.all()
-        print "req's scope = ", req.scope.all()
+        # copy the scope information into the code from the initial
+        # request. This information is not available in the callback
+        # from the server
         code.scope.add(*req.scope.all())
         code.save() 
+
         print "saved code = ", vars(code) 
         print "code scope = ", code.scope 
+        # XXX This is not being used. May be it can be removed. 
         req.completed = TimestampGenerator()() 
         req.code = code_key # we dont store code object because it
                             # will be deleted
@@ -80,7 +106,8 @@ def request(request, req_id):
         traceback.print_exc() 
         pass
     
-    client = Client.objects.all()[:1][0]
+    #client = Client.objects.all()[:1][0]
+    client = req.client 
 
     # Add this to the code objects 
     template = {
@@ -98,38 +125,48 @@ def request(request, req_id):
 @login_required 
 @csrf_exempt
 def request_token(request): 
-
+    """
+    Handle the request from the user to obtain an access token for a
+    given code.
+    """ 
     print "Trying to obtain a token" 
 
-    client = Client.objects.all()[:1][0] 
-    print "Client = ", vars(client) 
     
     if request.method != "GET": 
         return HttpResponseRedirect("/")
     
     try:
-
+        
         params = {} 
+
+        # extract the user-specified code 
         params['code'] = request.GET.get('code')
         
-        # Obtain the state objects
+        # Obtain the state objects 
         code = Code.objects.get(key=params['code'])
         req = OauthRequest.objects.get(code=params['code'])
-
+        client = req.client 
+        #client = Client.objects.all()[:1][0] 
+        print "Client object = ", vars(client) 
+        print "Code object = ", vars(code) 
+        
+        # set the standard parameters 
         params['client_id'] = settings.RESOURCE_CLIENT_KEY         
         params['grant_type'] = 'authorization_code'         
+        
+        # Ignore the redirect_uri because we dont need a call back. The 
+        # json response is enough. 
         #params['redirect_uri'] = settings.CLIENT_SITE + code.redirect_uri
         
-        # set the scope 
+        # XXX set the scope. Not sure if this the best way. 
         print "type req.scope.all() = ", type(req.scope.all())
         all_keys = [s.key for s in req.scope.all()]
         print "all_scopes = ", all_keys
         if len(all_keys) > 0: 
-            params['scope'] = all_keys[0]
+            params['scope'] = all_keys[0] # XXX should be a join(",") instead?
         else:
             params['scope'] = ""
 
-        print "Found code = ", vars(code) 
         print "Sending data = ", params         
         
         client_key = settings.RESOURCE_CLIENT_KEY
@@ -146,7 +183,8 @@ def request_token(request):
         print "url = ", url 
         print "headers = ", headers 
 
-        # Call 
+        # There is nothing in the body. There is only a post - which
+        # for some reason seems to turn into a GET at the other end. 
         r = requests.post(url, data="", headers=headers)
         print "received headers = ", r.headers 
         if r.headers['content-type'] != 'application/json':
@@ -156,24 +194,29 @@ def request_token(request):
         grant_data = json.loads(r.content)
         print "grant data = ", grant_data
         
+        # Create an access token.  There is no place, it seems for a
+        # token_type (bearer etc.)
         access_token = \
             AccessToken.objects.create(user=request.user, 
                                        client=client, 
+                                       token=grant_data['access_token'],
                                        refresh_token=grant_data['refresh_token'],
                                        # token_type=gr['token_type'],
-                                       # scope=grant_data['scope'],
-                                       token=grant_data['access_token'])
+                                       # scope=grant_data['scope']
+                                       )
+        # Should be this [grant_data['scope']]? 
         access_ranges = list(AccessRange.objects.filter(key__in=grant_data['scope']))
         access_token.scope = access_ranges
         access_token.save() 
         
+        # Update the state 
         req.refresh_token = grant_data['refresh_token'] 
         req.token = grant_data['access_token'] 
         req.save() 
         print "access token = ", vars(access_token) 
         
-        # Dont delete the 
-        #code.delete() 
+        # Clean up 
+        code.delete() 
         
     except:
         traceback.print_exc() 
@@ -182,37 +225,63 @@ def request_token(request):
     # redirect 
     HttpResponseRedirect(settings.CLIENT_SITE + "/client/%s" % client.key)
 
+# Helper functions
+def get_auth(auth_type='basic'): 
+    if auth_type != "basic": 
+        raise Exception("Unknown authentication type asked for")
+                        
+    client_key = settings.RESOURCE_CLIENT_KEY
+    client_secret = settings.RESOURCE_CLIENT_SECRET
+    print "Client_key = ", client_key
+    print "Client secret=", client_secret 
+    basic_auth = "Basic %s" % b64encode(client_key + ":" + client_secret)
+    print "computed authorization = ", basic_auth
+    return basic_auth 
+
 @login_required 
 @csrf_exempt
 def refresh_token(request): 
-
-	#<form method="post" action="http://localhost:8000/oauth2/token" class="authenticate">
-        #<input type="hidden" name="grant_type" value="refresh_token" />
-        #<input type="hidden" name="refresh_token" value="38d6122e30" />
-        #<input type="hidden" name="client_id" value="d53d90894c157ab" />
-        #<input type="hidden" name="scope" value="" />
-        #<input type="submit" value="38d6122e30"/>
-        #</form>
+    """
+    Handle a request from the user for refreshing a token. 
+    """
+    # <form method="post" action="http://localhost:8000/oauth2/token" 
+    #                class="authenticate">
+    # <input type="hidden" name="grant_type" value="refresh_token" />
+    # <input type="hidden" name="refresh_token" value="38d6122e30" />
+    # <input type="hidden" name="client_id" value="d53d90894c157ab" />
+    # <input type="hidden" name="scope" value="" />
+    # <input type="submit" value="38d6122e30"/>
+    # </form>
 
     if request.method != "GET": 
         return HttpResponseRedirect("/")
     
+    # Obtain and lookup a refresh token 
     refresh_token_key = request.GET.get('refresh_token')
     try: 
         token = AccessToken.objects.get(refresh_token=refresh_token_key) 
         req = OauthRequest.objects.get(refresh_token=refresh_token_key) 
+        client = req.client
     except: 
         traceback.print_exc() 
         raise Exception("Invalid refresh token") 
-
+    
+    # Start constructing the request that must be sent to the resource
+    # server.
     params = {} 
     params['client_id'] = settings.RESOURCE_CLIENT_KEY         
     params['grant_type'] = 'refresh_token'
     params['refresh_token'] = token.refresh_token 
+    
+    # Dont need to specify the redirect_uri as we dont need a call
+    # back from the server. Just the json response is enough.
     #params['redirect_uri'] = \
     #    "http://%s/client/request/%s" % (request.get_host(), req.key)
 
     print "type req.scope.all() = ", type(req.scope.all())
+    #=> set the scope of the refresh. Not sure why scope is required
+    # again because it has been specific while obtaining the
+    # authorization. The scope cant be any different. 
     all_keys = [s.key for s in req.scope.all()]
     print "all_scopes = ", all_keys
     if len(all_keys) > 0: 
@@ -221,22 +290,17 @@ def refresh_token(request):
         params['scope'] = ""
         
     print "params = ", params 
-
-    client_key = settings.RESOURCE_CLIENT_KEY
-    client_secret = settings.RESOURCE_CLIENT_SECRET
-    print "Client_key = ", client_key
-    print "Client secret=", client_secret 
-    basic_auth = "Basic %s" % b64encode(client_key + ":" + client_secret)
-    print "computed authorization = ", basic_auth
+    
+    # Obtain the authentication 
+    basic_auth = get_auth() 
+    headers = { 'Authorization': basic_auth } 
+    print "headers = ", headers 
     
     # Constructing the call 
     url = settings.ACCESS_TOKEN_URL + "/?" + urlencode(params)
-    headers = { 'Authorization': basic_auth } 
-
     print "url = ", url 
-    print "headers = ", headers 
 
-    # Call 
+    # Call the server 
     r = requests.post(url, data="", headers=headers)
     print "received headers = ", r.headers 
     if r.headers['content-type'] != 'application/json':
@@ -246,20 +310,31 @@ def refresh_token(request):
     grant_data = json.loads(r.content)
     print "grant data = ", grant_data
     
+    # => Update the token state 
     token.token = grant_data['access_token']
     token.refresh_token = grant_data['refresh_token']
     token.save() 
-
+    
+    # Update the request state 
     req.token = grant_data['access_token']
     req.refresh_token = grant_data['refresh_token']
     req.save() 
-    
-    
+
+    return HttpResponseRedirect("/client/%s" % client.key)
     
 
 @login_required 
 def forward(request): 
+    """
+    Request authorization from the resource server. First create a
+    OauthRequest object to store local state and use when the callback
+    is obtained. 
+    """
     
+    # The request from the user is coming in the form a get. It must
+    # specify whether aadhaar must be used for authorization. 
+    
+    # XXX change /client/forward to something else. may be request_code 
     if request.method != "GET": 
         return HttpResponseRedirect(nexturl)
 
@@ -276,7 +351,8 @@ def forward(request):
     
     print "aadhaar = ", aadhaar, type(aadhaar) 
 
-    # Some dummy client. It doesnt matter. 
+    # Some dummy client. It does not matter. 
+    # XXX change this if you need to support multiple clients. 
     client = Client.objects.all()[:1][0]
     if client == None: 
         raise Exception("Could not find a suitable client") 
@@ -288,35 +364,35 @@ def forward(request):
         access_ranges = list(AccessRange.objects.filter(key__in=[scope_key]))
     else:
         access_ranges = []
-
-    #params = request.GET.copy()
-    params = {} 
-    params['response_type'] = 'code'
-    params['client_id'] = settings.RESOURCE_CLIENT_KEY 
+    response_type = 'code'
     
-    if scope_key is not None: 
-        params['scope'] = scope_key 
-
+    # Now create the request. 
     req = OauthRequest.objects.create(client=client,
                                       user=user, 
                                       #aadhaar=aadhaar,
-                                      response_type=params['response_type'])
+                                      response_type=response_type)
 
     req.scope = access_ranges
     req.save() 
     print "created request object ", req, "with key ", req.key 
 
-    # Now key is available. So update the URL
+    # Construct the request 
+    #params = request.GET.copy()
+    params = {} 
+    params['response_type'] = response_type
+    params['client_id'] = settings.RESOURCE_CLIENT_KEY 
+    if scope_key is not None: 
+        params['scope'] = scope_key 
     params['redirect_uri'] = "http://%s/client/request/%s" % (request.get_host(), req.key)
-    url = urlencode(params)
-    print "Updated parameters = ", params 
     
+    # Construct the url 
+    url = urlencode(params)
     if aadhaar: 
-        print "aadhaar enabled link" 
         next = "%s?%s" % (settings.AADHAAR_AUTHORIZE_URL, url)
     else:
-        print "normal link" 
         next = "%s?%s" % (settings.AUTHORIZE_URL, url)
+    print "Updated parameters = ", params 
+    print "Redirecting to ", next 
 
     print "redirecting the request to ", next 
     return HttpResponseRedirect(next) 

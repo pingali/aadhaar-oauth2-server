@@ -94,7 +94,7 @@ Installation
 
 
 >      $ sudo easy_install oauth2app
->      <install pyAadhaarAuth from https://github.com/pingali/pyAadhaarAuth> 
+>      <Install pyAadhaarAuth from http://github.com/pingali/pyAadhaarAuth>
 >      $ sudo easy_install  https://github.com/pingali/django-auth-aadhaar 
 
 Download the source: 
@@ -108,7 +108,7 @@ Government of India, health department):
 >      $ cd myresource
 >      $ python manage.py syncdb
 >      $ python manage.py runserver 127.0.0.1:8000
->      Create user and download client configuration as suggested below 
+>      
 
 Now visit [resource server][resource-server] (http://localhost:8000) and
 signup/login. Follow instructions to create a client. The server
@@ -213,6 +213,9 @@ TBD
 
 Known Issues
 ------------
+
+* Myclient uses only one client. It will not work correctly if more
+  than one client are created in myclient.
 
 Many. TBD. 
 

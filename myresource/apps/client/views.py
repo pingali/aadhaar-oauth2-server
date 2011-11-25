@@ -7,7 +7,15 @@ from oauth2app.models import Client, AccessToken, Code
 from base64 import b64encode
 
 def client(request, client_id):
-    
+    """
+    Simple function to show the codes and access tokens associated 
+    with the user. This should not be used to obtain the token 
+    as much as possible 
+    """
+    # XXX Originally this was also the callback URI for the resource
+    # server. However the callback is ignored for all practical
+    # purposes because the client and resource server shared the code
+    # and token database.
     print "In apps.client.views.client - entered" 
     client = Client.objects.get(key=client_id)
     template = {

@@ -13,6 +13,9 @@ from oauth2app.authorize import UnvalidatedRequest, UnauthenticatedUser
 from .forms import AuthorizeForm
 from oauth2app.models import Client, AccessToken, Code
 
+"""
+Main authorization code for the resource server. 
+"""
 @login_required
 def missing_redirect_uri(request):
     return render_to_response(
@@ -23,9 +26,15 @@ def missing_redirect_uri(request):
 
 @login_required
 def authorize(request):
+    """
+    Normal or non-aadhaar authorization of requests. Note that this
+    request is coming from the client (thirdparty site). 
+    """
     print "Came here - authorizer"
     authorizer = Authorizer()
     try:
+        # Check if all the parameters have been specified in the 
+        # call 
         authorizer.validate(request)
     except MissingRedirectURI, e:
         return HttpResponseRedirect("/oauth2/missing_redirect_uri")
@@ -62,10 +71,15 @@ def authorize(request):
     return HttpResponseRedirect("/")
 
 def aadhaar_login_required(f):
+    """
+    Aadhaar login decorator. 
+    """
     print "aadhaar login decorator"
     def wrap(request, *args, **kwargs):
         redirect=False
         user = request.user 
+        # Check if the user is authenticated and has a profile that
+        # says this user has authenticated using aadhaar. 
         if not user.is_authenticated(): 
             print "aadhaar login decorator: User not found"
             redirect = True 
@@ -93,6 +107,14 @@ def aadhaar_login_required(f):
 
 @aadhaar_login_required
 def authorize_aadhaar(request):
+    """
+    Authorize using aadhaar. Unnecessarily duplicates the normal
+    authorize and To be DRY'd out.  Note that this request is coming
+    from the client (thirdparty site).
+    """
+
+    # XXX DRY out this code. 80% is repeated from normal authorize. 
+
     print "Came here - authorizer "
     authorizer = Authorizer()
     try:
@@ -113,8 +135,8 @@ def authorize_aadhaar(request):
         return authorizer.error_redirect()
 
     if request.method == 'GET':
-        # Make sure the authorizer has validated before requesting the client
-        # or access_ranges as otherwise they will be None.
+        # Make sure the authorizer has validated before requesting the
+        # client or access_ranges as otherwise they will be None.
         template = {
             "client":authorizer.client, 
             "access_ranges":authorizer.access_ranges}

@@ -13,6 +13,10 @@ from oauth2app.authorize import UnvalidatedRequest, UnauthenticatedUser
 from .forms import AuthorizeForm
 from oauth2app.models import Client, AccessToken, Code
 
+"""
+This code is here for legacy reasons. Can be deleted. The
+authorization is done by the myresource/apps/oauth2 
+"""
 @login_required
 def missing_redirect_uri(request):
     return render_to_response(
@@ -23,6 +27,9 @@ def missing_redirect_uri(request):
 
 @login_required
 def authorize(request, aadhaar=False):
+    
+    raise Exception("Client authorize. Should not come here") 
+
     print "Came here - authorizer aadhaar = ", aadhaar
     authorizer = Authorizer()
     try:
@@ -34,6 +41,10 @@ def authorize(request, aadhaar=False):
         client =  Client.objects.get(key=client_id)
         if client == None: 
             raise AuthorizationException("Unknown client") 
+        
+        # This is necessary if the logged in user is different from
+        # the client identified. This is possibly a legacy issue. The 
+        # check is useful anyway. 
         resource_owner = client.user 
         print "resource owner = ", resource_owner 
         if (loggedin_user != resource_owner):

@@ -1,12 +1,14 @@
 #-*- coding: utf-8 -*-
 
-
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from oauth2app.models import Client, AccessToken
 import time 
 
 def homepage(request):
+    """
+    Show all available clients and access tokens. 
+    """
     template = {}
     if request.user.is_authenticated():
         now = int(time.time())
