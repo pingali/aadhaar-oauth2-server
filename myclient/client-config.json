@@ -1,0 +1,1 @@
+{"aadhaar_authorize_url": "http://localhost:8000/oauth2/authorize/aadhaar", "resource_name": "Resource Site", "authorize_url": "http://localhost:8000/oauth2/authorize", "resource_server": "http://localhost:8000", "client_secret": "57edb78728e1e61c25cca5e104f9c5", "access_token_url": "http://localhost:8000/oauth2/token", "client_key": "d53d90894c157ab94d693a24d7a0cc"}
