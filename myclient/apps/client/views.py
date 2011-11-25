@@ -122,6 +122,19 @@ def request(request, req_id):
         RequestContext(request))
 
 
+# Helper functions
+def get_auth(auth_type='basic'): 
+    if auth_type != "basic": 
+        raise Exception("Unknown authentication type asked for")
+                        
+    client_key = settings.RESOURCE_CLIENT_KEY
+    client_secret = settings.RESOURCE_CLIENT_SECRET
+    print "Client_key = ", client_key
+    print "Client secret=", client_secret 
+    basic_auth = "Basic %s" % b64encode(client_key + ":" + client_secret)
+    print "computed authorization = ", basic_auth
+    return basic_auth 
+
 @login_required 
 @csrf_exempt
 def request_token(request): 
@@ -130,13 +143,10 @@ def request_token(request):
     given code.
     """ 
     print "Trying to obtain a token" 
-
-    
     if request.method != "GET": 
         return HttpResponseRedirect("/")
     
     try:
-        
         params = {} 
 
         # extract the user-specified code 
@@ -169,19 +179,14 @@ def request_token(request):
 
         print "Sending data = ", params         
         
-        client_key = settings.RESOURCE_CLIENT_KEY
-        client_secret = settings.RESOURCE_CLIENT_SECRET
-        print "Client_key = ", client_key
-        print "Client secret=", client_secret 
-        basic_auth = "Basic %s" % b64encode(client_key + ":" + client_secret)
-        print "computed authorization = ", basic_auth
-        
+        # Obtain the authentication 
+        basic_auth = get_auth() 
+        headers = { 'Authorization': basic_auth } 
+        print "headers = ", headers         
+
         # Constructing the call 
         url = settings.ACCESS_TOKEN_URL + "/?" + urlencode(params)
-        headers = { 'Authorization': basic_auth } 
-
         print "url = ", url 
-        print "headers = ", headers 
 
         # There is nothing in the body. There is only a post - which
         # for some reason seems to turn into a GET at the other end. 
@@ -205,8 +210,10 @@ def request_token(request):
                                        # scope=grant_data['scope']
                                        )
         # Should be this [grant_data['scope']]? 
-        access_ranges = list(AccessRange.objects.filter(key__in=grant_data['scope']))
+        access_ranges = list(AccessRange.objects.filter(key__in=[grant_data['scope']]))
         access_token.scope = access_ranges
+        # alternative to the above
+        # access_token.scope.add(*req.scope.all())
         access_token.save() 
         
         # Update the state 
@@ -225,18 +232,6 @@ def request_token(request):
     # redirect 
     HttpResponseRedirect(settings.CLIENT_SITE + "/client/%s" % client.key)
 
-# Helper functions
-def get_auth(auth_type='basic'): 
-    if auth_type != "basic": 
-        raise Exception("Unknown authentication type asked for")
-                        
-    client_key = settings.RESOURCE_CLIENT_KEY
-    client_secret = settings.RESOURCE_CLIENT_SECRET
-    print "Client_key = ", client_key
-    print "Client secret=", client_secret 
-    basic_auth = "Basic %s" % b64encode(client_key + ":" + client_secret)
-    print "computed authorization = ", basic_auth
-    return basic_auth 
 
 @login_required 
 @csrf_exempt
@@ -313,6 +308,7 @@ def refresh_token(request):
     # => Update the token state 
     token.token = grant_data['access_token']
     token.refresh_token = grant_data['refresh_token']
+    token.expire = token.expire + int(grant_data['expire_in'])
     token.save() 
     
     # Update the request state 
@@ -320,7 +316,9 @@ def refresh_token(request):
     req.refresh_token = grant_data['refresh_token']
     req.save() 
 
-    return HttpResponseRedirect("/client/%s" % client.key)
+    next = "/client/%s" % client.key
+    print "Redirecting to", next 
+    return HttpResponseRedirect(next)
     
 
 @login_required 
@@ -364,6 +362,9 @@ def forward(request):
         access_ranges = list(AccessRange.objects.filter(key__in=[scope_key]))
     else:
         access_ranges = []
+
+    print "access_ranges = ", access_ranges 
+    print [r.key for r in access_ranges]
     response_type = 'code'
     
     # Now create the request. 

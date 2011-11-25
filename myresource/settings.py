@@ -10,7 +10,10 @@ else:
 
 sys.path.insert(0, here(".."))
 sys.path.insert(0, here("..%s.." % sep))
-sys.path.insert(0, here("..%s..%s..%sdjango-auth-aadhaar" % (sep,sep,sep)))
+sys.path.insert(0, here("..%s..%sdjango-auth-aadhaar" % (sep,sep)))
+sys.path.insert(0, here("..%s..%soauth2app-aadhaar" % (sep,sep)))
+
+import oauth2app 
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -62,7 +65,7 @@ STATIC_URL = '/static/'
 
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
-STATICFILES_DIRS = here('static')
+STATICFILES_DIRS = (here('static'),)
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -87,6 +90,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    #'shared.xsmiddleware.XsSharing',
 )
 
 ROOT_URLCONF = 'myresource.urls'

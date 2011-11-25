@@ -11,7 +11,9 @@ else:
 
 sys.path.insert(0, here(".."))
 sys.path.insert(0, here("..%s.." % sep))
-sys.path.insert(0, here("..%s..%s..%sdjango-auth-aadhaar" % (sep,sep,sep)))
+sys.path.insert(0, here("..%s..%sdjango-auth-aadhaar" % (sep,sep)))
+sys.path.insert(0, here("..%s..%soauth2app-aadhaar" % (sep,sep)))
+import oauth2app 
 
 MYSITE="Client Site"
 MYSITE_ROLE="client"
@@ -20,7 +22,6 @@ CLIENT_CONFIG=here('client-config.json')
 
 if (os.path.isfile(CLIENT_CONFIG)):
     conf = json.loads(file(CLIENT_CONFIG).read())
-    print conf 
 
     RESOURCE_CLIENT_KEY    = conf['client_key']
     RESOURCE_CLIENT_SECRET = conf['client_secret']
@@ -61,7 +62,7 @@ DATABASES = {
 }
 
 FIXTURE_DIRS = (
-   os.path.join(os.path.dirname(__file__), 'apps/account/fixtures'),
+   here('apps/account/fixtures'),
 )
 
 TIME_ZONE = 'America/Chicago'
@@ -86,7 +87,7 @@ STATIC_URL = '/static/'
 
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
-STATICFILES_DIRS = (os.path.join(os.path.dirname(__file__), 'static'),)
+STATICFILES_DIRS = (here('static'),)
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -114,6 +115,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    #'shared.xsmiddleware.XsSharing',
 )
 
 ROOT_URLCONF = 'myclient.urls'
