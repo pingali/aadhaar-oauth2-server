@@ -136,9 +136,16 @@
 						{{ access_range.key }}
 					{% endfor %}
 				</td>
-				<td><a href="{{resource_server}}/api/date_joined" class="authenticate" id="_{{access_token.token}}">/api/date_joined</a></td>
-				<td><a href="{{resource_server}}/api/last_login" class="authenticate" id="_{{access_token.token}}">/api/last_login</a></td>
-				<td><a href="{{resource_server}}/api/email" class="authenticate" id="_{{access_token.token}}">/api/email</a></td>
+				{% if mysite_role == "client" %}
+				<td><a href="/api/remote/date_joined" class="authenticate" id="_{{access_token.token}}">/api/date_joined</a></td>
+				<td><a href="/api/remote/last_login" class="authenticate" id="_{{access_token.token}}">/api/last_login</a></td>
+				<td><a href="/api/remote/email" class="authenticate" id="_{{access_token.token}}">/api/email</a></td>
+				{% else %}
+				<td><a href="/api/date_joined" class="authenticate" id="_{{access_token.token}}">/api/date_joined</a></td>
+				<td><a href="/api/last_login" class="authenticate" id="_{{access_token.token}}">/api/last_login</a></td>
+				<td><a href="/api/email" class="authenticate" id="_{{access_token.token}}">/api/email</a></td>
+				{% endif %} 
+				
 			</tr>		
 		{% endfor %}
 	</table>
