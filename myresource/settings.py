@@ -115,7 +115,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'myresource.apps.base',
+    'shared.apps.base',
     'myresource.apps.client',
     'myresource.apps.account',
     'myresource.apps.oauth2',
