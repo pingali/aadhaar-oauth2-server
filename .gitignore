@@ -39,3 +39,7 @@ Icon?
 Thumbs.db
 *.pid
 *.swp
+
+
+#others
+*.orig
