@@ -1,26 +1,32 @@
 # Django settings for oauth2app example myresource project.
 
 import os, sys
-here = lambda path: os.path.abspath(os.path.join(os.path.dirname(__file__),path))
 
-if os.name == "posix":
-    sep = "/"
-else:
-    sep = "\\"
+def findpath(path):
+    return os.path.abspath(os.path.join(os.path.dirname(__file__),path))
 
-sys.path.insert(0, here(".."))
-sys.path.insert(0, here("..%s.." % sep))
-sys.path.insert(0, here("..%s..%sdjango-auth-aadhaar" % (sep,sep)))
-sys.path.insert(0, here("..%s..%soauth2app-aadhaar" % (sep,sep)))
-
-import oauth2app 
-
+DEVELOPMENT=True 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
+sys.path.insert(0, findpath(".."))
+if DEVELOPMENT: 
+    if os.name == "posix":
+        sep = "/"
+    else:
+        sep = "\\"
+        
+    sys.path.insert(0, findpath("..%s.." % sep))
+    sys.path.insert(0, findpath("..%s..%sdjango-auth-aadhaar" % (sep,sep)))
+    sys.path.insert(0, findpath("..%s..%soauth2app-aadhaar" % (sep,sep)))
+
 
 ADMINS = ()
 MANAGERS = ADMINS
 
+#
+# => Configuration this server end
+# 
 MYSITE="Resource Site"
 MYSITE_ROLE="server" 
 RESOURCE_SERVER="http://localhost:8000"
@@ -40,32 +46,21 @@ DATABASES = {
 }
 
 FIXTURE_DIRS = (
-   os.path.join(os.path.dirname(__file__), 'apps/account/fixtures'),
+   findpath('apps/account/fixtures'),
 )
 
 TIME_ZONE = 'America/Chicago'
-
 LANGUAGE_CODE = 'en-us'
-
 SITE_ID = 1
-
 USE_I18N = True
-
 USE_L10N = True
-
 LOGIN_URL = "/account/login"
-
 MEDIA_ROOT = ''
-
 MEDIA_URL = ''
-
 STATIC_ROOT = ''
-
 STATIC_URL = '/static/'
-
 ADMIN_MEDIA_PREFIX = '/static/admin/'
-
-STATICFILES_DIRS = (here('static'),)
+STATICFILES_DIRS = (findpath('static'),)
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -96,12 +91,13 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'myresource.urls'
 
 TEMPLATE_DIRS = (
-    here('templates'),
-    here('..%sshared%stemplates' % (sep, sep)),
+    findpath('templates'),
+    findpath('..%sshared%stemplates' % (sep, sep)),
     )
 
+# Configure the aadhaar-based authentication 
 AUTH_PROFILE_MODULE='django_auth_aadhaar.AadhaarUserProfile' 
-AADHAAR_CONFIG_FILE=here('fixtures/auth.cfg')
+AADHAAR_CONFIG_FILE=findpath('fixtures/auth.cfg')
 AUTHENTICATION_BACKENDS = (     
     'django_auth_aadhaar.backend.AadhaarBackend',
     #'django.contrib.auth.backends.RemoteUserBackend',
@@ -115,6 +111,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'shared',
     'shared.apps.base',
     'myresource.apps.client',
     'myresource.apps.account',
@@ -122,7 +119,6 @@ INSTALLED_APPS = (
     'myresource.apps.api',
     'uni_form',
     'oauth2app',
-    'shared',
     'django_auth_aadhaar')
 
 LOGGING = {

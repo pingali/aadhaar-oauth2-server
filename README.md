@@ -200,6 +200,16 @@ structure like this:
 	 }
 
 
+TODO 
+----
+
+Immediate: 
+* Cleanup and logging support 
+* Apache configuration client and server
+
+Medium term: 
+* Support for some real applications
+
 Debugging
 ---------
 
