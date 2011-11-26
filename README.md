@@ -27,9 +27,9 @@ individuals. Please see [Aadhaar authentication API Ver 1.5 (Rev 1)][spec].
 Intended Audience
 -----------------
 
-Developers of Aadhaar-enabled applications. Effort has been made to
-keep the code readable but they should be able to read the code and
-experiment to get going.
+Developers of Aadhaar-enabled data-sharing applications. Effort has been 
+made to keep the code readable but they should be able to read the code 
+and experiment to get going.
 
 Codebase 
 --------
@@ -39,9 +39,9 @@ of Oauth2 protocol called [oauth2app][oauth2app],
 [Gariel Grant's fork][oauth2app-gabriel] and Django. The code has been
 extended in a few ways:
 
-* Separated the oauth2 client and server implementations - which were combined into one 
-* Integrated aadhaar authentication through [django-auth-aadhaar][django-auth-aadhaar]
-* Moved the logic from the front end javascript to the server 
+  * Separated the oauth2 client and server implementations - which were combined into one 
+  * Integrated aadhaar authentication through [django-auth-aadhaar][django-auth-aadhaar]
+  * Moved the logic from the front end javascript to the server 
 
 [oauth2app]: https://github.com/hiidef/oauth2app 
 [oauth2app-gabriel]: https://github.com/gabrielgrant/oauth2app 
@@ -50,9 +50,9 @@ extended in a few ways:
 The codebase is a bit clunky and needs work to make it robust. But it
 is a reasonable starting point. There are three directories: 
 
-* myresource: Django application that is the resource server 
-* myclient: Django application that is the client 
-* shared: Libraries and functions that are shared by both the above applications
+  * myresource: Django application that is the resource server 
+  * myclient: Django application that is the client 
+  * shared: Libraries and functions that are shared by both the above applications
 
 
 Latest Release
@@ -92,6 +92,7 @@ Oauth2 Flow
 Installation
 ------------
 
+Install the dependencies first. 
 
 >      $ sudo easy_install oauth2app
 >      <Install pyAadhaarAuth from http://github.com/pingali/pyAadhaarAuth>
@@ -152,6 +153,15 @@ page instead of regular login page. The login page and authentication
 is based on [django-auth-aadhaar][django-auth-aadhaar] and
 [pyAadhaarAuth][pyAadhaarAuth].
 
+Once the token is obtained, you can now query the API. Go the main 
+page of the client (http://localhost:8001). At the bottom you 
+will see available api paths (/api/email, /api/date_joined etc.)
+and have a button for the client site and resource site. 
+When you click on the resource site for any of the api calls, 
+the corresponding data is accessed using the token that has 
+been acquired. You should be able to see a popup with the result
+of the lookup (data or error message). 
+
 [pyAadhaarAuth]: http://github.com/pingali/pyAadhaarAuth 
 
 *The name doesnt matter and it mostly there for legacy reasons. We
@@ -189,7 +199,7 @@ and location where the server configuration is stored.
 The client configuration file is obtained from the server and has a
 structure like this:
 
-     { 
+       { 
 		 "resource_name": "Resource Site", 
 		 "resource_server": "http://localhost:8000", 
 		 "client_secret": "57edb78728e1e61c25cca5e104f9c5", 
@@ -204,11 +214,13 @@ TODO
 ----
 
 Immediate: 
-* Cleanup and logging support 
-* Apache configuration client and server
+
+  * Cleanup and logging support 
+  * Apache configuration client and server
 
 Medium term: 
-* Support for some real applications
+
+  * Support for some real applications
 
 Debugging
 ---------
@@ -241,8 +253,8 @@ Immediate:
 
 Medium term:  
 
-1. Expand the authentication support in conjunction with pyAadhaarAuth
-2. Experiment with python-oauth2 
+    1. Expand the authentication support in conjunction with pyAadhaarAuth
+    2. Experiment with python-oauth2 
 
 Thanks 
 ------   
