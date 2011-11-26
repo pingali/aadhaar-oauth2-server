@@ -44,8 +44,8 @@ extended in a few ways:
 * Moved the logic from the front end javascript to the server 
 
 [oauth2app]: https://github.com/hiidef/oauth2app 
-[oauth2app-grabriel]: https://github.com/gabrielgrant/oauth2app 
-[django-auth-aadhaar]: https://github.com/pingali/django-auth-aadhaar
+[oauth2app-gabriel]: https://github.com/gabrielgrant/oauth2app 
+[django-auth-aadhaar]: https://github.com/pingali/django-auth-aadhaar 
 
 The codebase is a bit clunky and needs work to make it robust. But it
 is a reasonable starting point. There are three directories: 
@@ -234,9 +234,10 @@ Work-in-progress
 
 Immediate: 
 
-1. Clean up the implementation
-2. Test with https connection (whenever it is available) 
-3. Performance evaluation/statistics    
+    1. Clean up the implementation including the response. Standardize
+       the interface. 
+    2. Test with https connection (whenever it is available) 
+    3. Performance evaluation/statistics    
 
 Medium term:  
 

@@ -29,7 +29,8 @@ def remote(request, target_method):
     except: 
         json_data = r.content 
         pass 
-    print "server response = ", json_data
+
+    print "Responding with ", json_data
     response = HttpResponse(json_data, 
                             content_type="application/json")
     return response 

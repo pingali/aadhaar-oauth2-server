@@ -2,6 +2,8 @@
 
 import os, sys
 import simplejson as json 
+import logging 
+
 
 def findpath(path):
     return os.path.abspath(os.path.join(os.path.dirname(__file__),path))
@@ -9,6 +11,7 @@ def findpath(path):
 DEVELOPMENT=True 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
 
 # For shared 
 sys.path.insert(0, findpath(".."))
@@ -140,21 +143,54 @@ INSTALLED_APPS = (
     'oauth2app',
     'django_auth_aadhaar')
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    }
-}
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)-6s: %(name)s - %(levelname)s - %(message)s',
+                    #filename=findpath('django.log'),
+                    #filemode='a+',
+                    )
+
+#
+#LOGGING = {
+#    'version': 1,
+#    'disable_existing_loggers': True,
+#    'formatters': {
+#        'verbose': {
+#            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+#        },
+#        'simple': {
+#            'format': '%(levelname)s %(message)s'
+#        },
+#    },
+#    'filters': {
+#    },
+#    'handlers': {
+#        'null': {
+#            'level':'DEBUG',
+#            'class':'django.utils.log.NullHandler',
+#        },
+#        'console':{
+#            'level':'DEBUG',
+#            'class':'logging.StreamHandler',
+#            'formatter': 'simple'
+#        },
+#        'mail_admins': {
+#            'level': 'ERROR',
+#            'class': 'django.utils.log.AdminEmailHandler',
+#            'filters': []
+#        }
+#    },
+#    'loggers': {
+#        'django': {
+#            'handlers':['console'],
+#            'propagate': True,
+#            'level':'DEBUG',
+#        },
+#        'django.request': {
+#            'handlers': ['mail_admins'],
+#            'level': 'ERROR',
+#            'propagate': False,
+#        },
+#    }
+#}
+#
