@@ -8,7 +8,8 @@ The idea behind this project is to enable sharing of data (e.g.,
 citizen health records in the government database) with third parties
 (e.g., a private hospital) when approved by citizen. It is based on
 combining oauth2, a data sharing protocol, with Aadhaar
-authentication. 
+authentication. We discuss the overall thought process in greater
+detail in [Aadhaar-enabled Data Sharing v2.0](https://raw.github.com/pingali/aadhaar-oauth2-server/Aadhaar-enabled_Data_Sharing_2.0.pdf)
 
 [Oauth](http://oauth.net) is an IETF-approved data-sharing
 protocol. It is used by established player such as Google and Twitter
